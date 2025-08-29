@@ -1,0 +1,49 @@
+import torch
+import cv2
+import numpy as np
+import time
+from datetime import datetime
+
+# Load YOLOv5 model (only person detection - class 0 in COCO dataset)
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+model.classes = [0]  # Only detect people
+
+# Threshold for crowd density
+CROWD_THRESHOLD = 20  # You can tune this
+
+# Video source: 0 for webcam, or use an IP camera stream URL
+cap = cv2.VideoCapture(0)  
+
+def trigger_alert(count):
+    print(f"[{datetime.now()}] ⚠️ High crowd density detected: {count} people")
+    # You can add sound, notification, or send to server here
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        print("Failed to grab frame.")
+        break
+
+    results = model(frame)
+    people = results.xyxy[0]  # x1, y1, x2, y2, conf, cls
+    count = len(people)
+
+    # Draw boxes
+    for person in people:
+        x1, y1, x2, y2, conf, cls = person
+        cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+        cv2.putText(frame, f'Person {conf:.2f}', (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
+
+    # Show count
+    cv2.putText(frame, f'People Count: {count}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+
+    if count >= CROWD_THRESHOLD:
+        trigger_alert(count)
+
+    cv2.imshow('Crowd Monitoring', frame)
+    
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
