@@ -8,7 +8,7 @@ from datetime import datetime
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
 model.classes = [0]  # Only detect people
 
-# Threshold for crowd density
+
 CROWD_THRESHOLD = 20  # You can tune this
 
 # Video source: 0 for webcam, or use an IP camera stream URL
@@ -47,3 +47,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
